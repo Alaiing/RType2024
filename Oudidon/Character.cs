@@ -164,6 +164,11 @@ namespace Oudidon
             _currentScale = scale;
         }
 
+        public void SetRotation(float rotation) 
+        {
+            _currentRotation = rotation;
+        }
+
         public void MoveTo(Vector2 position)
         {
             _position = position;

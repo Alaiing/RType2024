@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Oudidon;
 using System;
 using System.Collections.Generic;
@@ -16,18 +17,34 @@ namespace RType2024
 
         private Rectangle _collider;
 
-        public Projectile(SpriteSheet spriteSheet, Game game) : base(spriteSheet, game)
+        private SoundEffectInstance _soundInstance;
+
+        public Projectile(SpriteSheet spriteSheet, Game game, SoundEffect sound) : base(spriteSheet, game)
         {
             SetAnimation(IDLE_ANIMATION);
-            _collider = new Rectangle(0,0, spriteSheet.FrameWidth, spriteSheet.FrameHeight);
+            _collider = new Rectangle(0, 0, spriteSheet.FrameWidth, spriteSheet.FrameHeight);
+            _soundInstance = sound.CreateInstance();
         }
 
         public void Spawn(Level level, Vector2 position, Vector2 direction, float speed)
         {
             _level = level;
+            _level.EnabledChanged += OnLevelEnableChanged;
+            _level.OnLevelReset += OnLevelReset;
             SetBaseSpeed(speed);
             MoveTo(position);
             MoveDirection = direction;
+            _soundInstance.Play();
+        }
+
+        private void OnLevelReset()
+        {
+            Die();
+        }
+
+        private void OnLevelEnableChanged(object sender, EventArgs e)
+        {
+            Enabled = _level.Enabled;
         }
 
         public override void Update(GameTime gameTime)
@@ -36,14 +53,37 @@ namespace RType2024
 
             Move((float)gameTime.ElapsedGameTime.TotalSeconds);
 
+            TestBackgroundCollision();
+
+            TestEnemyCollision();
+        }
+
+        private void TestBackgroundCollision()
+        {
             if (Position.X - SpriteSheet.LeftMargin > RType2024.PLAYGROUND_WIDTH
                 || _level.IsColliding(Position - SpriteSheet.DefaultPivot.ToVector2(), _collider))
 
             {
-                Game.Components.Remove(this);
+                Die();
             }
+        }
 
-            // TODO: test collisions && out of bounds
+        private void TestEnemyCollision()
+        {
+            foreach (Enemy enemy in _level.EnemyList)
+            {
+                if (MathUtils.OverlapsWith(GetBounds(), enemy.GetBounds()))
+                {
+                    enemy.TakeHit(1);
+                    Die();
+                    return;
+                }
+            }
+        }
+
+        private void Die()
+        {
+            Game.Components.Remove(this);
         }
     }
 }

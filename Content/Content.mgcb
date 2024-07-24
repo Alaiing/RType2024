@@ -25,6 +25,18 @@
 /processorParam:TextureFormat=Color
 /build:base-projectile.png
 
+#begin explosion.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:explosion.png
+
 #begin fly.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -36,6 +48,24 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:fly.png
+
+#begin ingame-music.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:ingame-music.wav
+
+#begin piou.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:piou.wav
+
+#begin prouahou.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:prouahou.wav
 
 #begin ship.png
 /importer:TextureImporter

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Oudidon;
 using System;
 using System.Collections.Generic;
@@ -15,8 +16,9 @@ namespace RType2024
         private float _movementSpeed = 50f;
         private float _projectileSpeed = 100f;
         private SpriteSheet _baseProjectileSheet;
+        private SoundEffect _baseProjectileSound;
 
-        private Rectangle _collider = new Rectangle(2,4,28,8);
+        private Rectangle _collider = new Rectangle(2, 4, 28, 8);
         public Rectangle Collider => _collider;
 
         private Level _level;
@@ -38,12 +40,19 @@ namespace RType2024
             DrawOrder = 99;
         }
 
+        public override Rectangle GetBounds()
+        {
+            return new Rectangle(PixelPositionX - SpriteSheet.LeftMargin + Collider.X, PixelPositionY- SpriteSheet.TopMargin + Collider.Y, Collider.Width, Collider.Height);
+        }
+
         protected override void LoadContent()
         {
             base.LoadContent();
 
             _baseProjectileSheet = new SpriteSheet(Game.Content, "base-projectile", 12, 4, new Point(12, 2));
             _baseProjectileSheet.RegisterAnimation(Projectile.IDLE_ANIMATION, 0, 0, 1f);
+
+            _baseProjectileSound = Game.Content.Load<SoundEffect>("piou");
         }
 
         public override void Update(GameTime gameTime)
@@ -81,6 +90,29 @@ namespace RType2024
 
             Move((float)gameTime.ElapsedGameTime.TotalSeconds);
 
+            TestBorderLimits();
+
+            TestBackgroundCollision();
+
+            TestEnemyCollision();
+        }
+
+        public override void Draw(GameTime gameTime)
+        {
+            base.Draw(gameTime);
+            //SpriteBatch.DrawRectangle(GetBounds(), Color.Green);
+        }
+
+        private void TestBackgroundCollision()
+        {
+            if (_level.IsColliding(Position - SpriteSheet.DefaultPivot.ToVector2(), _collider))
+            {
+                Die();
+            }
+        }
+
+        private void TestBorderLimits()
+        {
             if (Position.X - SpriteSheet.LeftMargin < 0)
             {
                 MoveTo(new Vector2(SpriteSheet.LeftMargin, Position.Y));
@@ -98,19 +130,30 @@ namespace RType2024
             {
                 MoveTo(new Vector2(Position.X, RType2024.PLAYGROUND_HEIGHT - SpriteSheet.BottomMargin));
             }
+        }
 
-            if (_level.IsColliding(Position - SpriteSheet.DefaultPivot.ToVector2(), _collider))
+        private void TestEnemyCollision()
+        {
+            foreach (Enemy enemy in _level.EnemyList)
             {
-                EventsManager.FireEvent(EVENT_SHIP_DESTROYED);
+                if (MathUtils.OverlapsWith(GetBounds(), enemy.GetBounds()))
+                {
+                    Die();
+                }
             }
         }
 
         private void FireBaseProjectile()
         {
-            Projectile projectile = new Projectile(_baseProjectileSheet, Game);
+            Projectile projectile = new Projectile(_baseProjectileSheet, Game, _baseProjectileSound);
             projectile.Spawn(_level, Position + new Vector2(SpriteSheet.RightMargin + 4, 3), new Vector2(1, 0), _projectileSpeed);
             projectile.Activate();
             Game.Components.Add(projectile);
+        }
+
+        private void Die()
+        {
+            EventsManager.FireEvent(EVENT_SHIP_DESTROYED);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Oudidon;
@@ -19,14 +20,17 @@ namespace RType2024
         private Ship _ship;
 
         private Texture2D _background;
+        private SpriteSheet _explosionSprite;
+        private SoundEffect _explosionSound;
 
-        private SpriteSheet _flySheet;
+        private SoundEffectInstance _ingameMusicInstance;
 
         private Level _level;
 
         protected override void Initialize()
         {
             EventsManager.ListenTo(Ship.EVENT_SHIP_DESTROYED, OnShipDestroyed);
+            EventsManager.ListenTo<Vector2>(Explosion.EVENT_SPAWN_EXPLOSION, OnSpawnExplosion);
 
             base.Initialize();
         }
@@ -49,10 +53,16 @@ namespace RType2024
             _ship.Deactivate();
             Components.Add(_ship);
 
-            _flySheet = new SpriteSheet(Content, "fly", 24, 24, new Point(12, 12));
-            _flySheet.RegisterAnimation(Enemy.ANIMATION_IDLE, 0, 0, 1);
-
             _background = Content.Load<Texture2D>("test-level-background");
+
+            _explosionSprite = new SpriteSheet(Content, "explosion", 16, 16, new Point(8, 8));
+            _explosionSprite.RegisterAnimation(Explosion.ANIMATION_IDLE, 0, 13, 30f);
+
+            _explosionSound = Content.Load<SoundEffect>("prouahou");
+            
+            _ingameMusicInstance = Content.Load<SoundEffect>("ingame-music").CreateInstance();
+            _ingameMusicInstance.IsLooped = true;
+            _ingameMusicInstance.Volume = 0.75f;
 
             _level = new Level(this, _background);
             Components.Add(_level);
@@ -92,7 +102,19 @@ namespace RType2024
         #region Events
         private void OnShipDestroyed()
         {
+            EventsManager.FireEvent(Explosion.EVENT_SPAWN_EXPLOSION, _ship.Position);
             SetState(STATE_SHIP_DESTROYED);
+        }
+
+        private void SpawnExplosion(Vector2 position)
+        {
+            EventsManager.FireEvent(Explosion.EVENT_SPAWN_EXPLOSION, position);
+        }
+
+        private void OnSpawnExplosion(Vector2 position)
+        {
+            Explosion newExplosion = new Explosion(_explosionSprite, _explosionSound, this, _level);
+            newExplosion.Spawn(position);
         }
         #endregion
 
@@ -103,9 +125,8 @@ namespace RType2024
             _ship.MoveTo(new Vector2(160, 100));
             _ship.Activate();
             _level.Enabled = true;
-
-            Enemy enemy = new Fly(_flySheet, null, this);
-            enemy.Spawn(new Vector2(PLAYGROUND_WIDTH + 50, PLAYGROUND_HEIGHT / 2));
+            _ingameMusicInstance.Stop();
+            _ingameMusicInstance.Play();
         }
 
         private void GameDraw(SpriteBatch batch, GameTime gameTime)
@@ -115,7 +136,7 @@ namespace RType2024
             SpriteBatch.FillRectangle(new Rectangle(0, PLAYGROUND_HEIGHT, PLAYGROUND_WIDTH, HUD_HEIGHT), Color.Blue);
         }
 
-        private void GameUpdate(GameTime time, float arg2)
+        private void GameUpdate(GameTime gameTime, float stateTime)
         {
         }
 
@@ -127,11 +148,12 @@ namespace RType2024
 
         private void ShipDestroyedUpdate(GameTime time, float stateTime)
         {
-            if(stateTime > 5f)
+            if (stateTime > 2f)
             {
                 SetState(STATE_GAME);
             }
         }
+
 
         #endregion
     }
