@@ -14,14 +14,16 @@ namespace RType2024
         private float _amplitude = 12;
         private float _timer;
 
-        public Fly(SpriteSheet spriteSheet, SpriteSheet projectileSheet, Game game) : base(spriteSheet, projectileSheet, game)
+        protected override int maxHP => 1;
+
+        public Fly(SpriteSheet spriteSheet, Game game) : base(spriteSheet, game)
         {
             SetBaseSpeed(40f);
         }
 
-        public override void Spawn(Vector2 position)
+        public override void Spawn(Vector2 position, Level level)
         {
-            base.Spawn(position);
+            base.Spawn(position, level);
             _timer = 0;
         }
 

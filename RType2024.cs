@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Input;
 using Oudidon;
 using System;
 using System.Diagnostics;
+using System.Net.Http.Headers;
 
 namespace RType2024
 {
@@ -18,10 +19,12 @@ namespace RType2024
         private const string STATE_SHIP_DESTROYED = "ShipDestroyed";
 
         private Ship _ship;
+        private Pod _pod;
 
         private Texture2D _background;
         private SpriteSheet _explosionSprite;
         private SoundEffect _explosionSound;
+        private SpriteSheet _bulletSprite;
 
         private SoundEffectInstance _ingameMusicInstance;
 
@@ -31,6 +34,7 @@ namespace RType2024
         {
             EventsManager.ListenTo(Ship.EVENT_SHIP_DESTROYED, OnShipDestroyed);
             EventsManager.ListenTo<Vector2>(Explosion.EVENT_SPAWN_EXPLOSION, OnSpawnExplosion);
+            EventsManager.ListenTo<Enemy>(Bullet.SPAWN_BULLET_EVENT, OnSpawnBullet);
 
             base.Initialize();
         }
@@ -53,10 +57,17 @@ namespace RType2024
             _ship.Deactivate();
             Components.Add(_ship);
 
+            SpriteSheet podSheet = new SpriteSheet(Content, "pod", 24, 24, new Point(12, 12));
+            podSheet.RegisterAnimation("Idle", 0, 0, 1);
+            _pod = new Pod(podSheet, this, _ship);
+
             _background = Content.Load<Texture2D>("test-level-background");
 
             _explosionSprite = new SpriteSheet(Content, "explosion", 16, 16, new Point(8, 8));
             _explosionSprite.RegisterAnimation(Explosion.ANIMATION_IDLE, 0, 13, 30f);
+
+            _bulletSprite = new SpriteSheet(Content, "bullet", 8, 8, new Point(4, 4));
+            _bulletSprite.RegisterAnimation(Bullet.ANIMATION_IDLE, 0, 0, 1f);
 
             _explosionSound = Content.Load<SoundEffect>("prouahou");
             
@@ -64,10 +75,8 @@ namespace RType2024
             _ingameMusicInstance.IsLooped = true;
             _ingameMusicInstance.Volume = 0.75f;
 
-            _level = new Level(this, _background);
+            _level = new Level(this, "level-test.data", _ship);
             Components.Add(_level);
-
-            _ship.SetLevel(_level);
 
             SetState(STATE_GAME);
         }
@@ -116,24 +125,45 @@ namespace RType2024
             Explosion newExplosion = new Explosion(_explosionSprite, _explosionSound, this, _level);
             newExplosion.Spawn(position);
         }
+
+        private void OnSpawnBullet(Enemy enemy)
+        {
+            Bullet newBullet = new Bullet(_bulletSprite, this);
+            Vector2 direction = _ship.Position - enemy.Position;
+            direction.Normalize();
+            newBullet.Spawn(enemy.GetBulletSpawnPosition(), direction);
+            _level.AddBullet(newBullet);
+        }
+
         #endregion
 
         #region States
         private void GameEnter()
         {
             _level.Reset();
+            _ship.Reset();
             _ship.MoveTo(new Vector2(160, 100));
             _ship.Activate();
             _level.Enabled = true;
-            _ingameMusicInstance.Stop();
-            _ingameMusicInstance.Play();
+            //_ingameMusicInstance.Stop();
+            //_ingameMusicInstance.Play();
+
+            _pod.Spawn();
+
+            _ship.SetLevel(_level);
+            _pod.SetLevel(_level);
         }
 
+        private Rectangle chargeGauge = new Rectangle(PLAYGROUND_WIDTH / 2 - 32, PLAYGROUND_HEIGHT + 2, 64, 8);
         private void GameDraw(SpriteBatch batch, GameTime gameTime)
         {
             DrawComponents(gameTime);
 
-            SpriteBatch.FillRectangle(new Rectangle(0, PLAYGROUND_HEIGHT, PLAYGROUND_WIDTH, HUD_HEIGHT), Color.Blue);
+            Rectangle fillGauge = chargeGauge;
+            fillGauge.Width = (int)(_ship.ProjectileCharge * chargeGauge.Width / _ship.MaxCharge);
+            SpriteBatch.FillRectangle(fillGauge, Color.Cyan);
+            SpriteBatch.DrawRectangle(chargeGauge, Color.Blue);
+
         }
 
         private void GameUpdate(GameTime gameTime, float stateTime)
@@ -143,6 +173,7 @@ namespace RType2024
         private void ShipDestroyedEnter()
         {
             _ship.Enabled = false;
+            _pod.Despawn();
             _level.Enabled = false;
         }
 

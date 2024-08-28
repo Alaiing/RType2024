@@ -19,11 +19,14 @@ namespace RType2024
 
         private SoundEffectInstance _soundInstance;
 
-        public Projectile(SpriteSheet spriteSheet, Game game, SoundEffect sound) : base(spriteSheet, game)
+        private int _damage;
+
+        public Projectile(SpriteSheet spriteSheet, Game game, SoundEffect sound, int damage) : base(spriteSheet, game)
         {
             SetAnimation(IDLE_ANIMATION);
             _collider = new Rectangle(0, 0, spriteSheet.FrameWidth, spriteSheet.FrameHeight);
             _soundInstance = sound.CreateInstance();
+            _damage = damage;
         }
 
         public void Spawn(Level level, Vector2 position, Vector2 direction, float speed)
@@ -74,7 +77,7 @@ namespace RType2024
             {
                 if (MathUtils.OverlapsWith(GetBounds(), enemy.GetBounds()))
                 {
-                    enemy.TakeHit(1);
+                    enemy.TakeHit(_damage);
                     Die();
                     return;
                 }

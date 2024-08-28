@@ -15,7 +15,7 @@ namespace Oudidon
         private Point _pivotOffset;
         public int PixelPositionX => (int)MathF.Floor(_position.X);
         public int PixelPositionY => (int)MathF.Floor(_position.Y);
-        private float _currentFrame;
+        protected float _currentFrame;
         public virtual int CurrentFrame => (int)MathF.Floor(_currentFrame);
         protected Color[] _colors;
         public Color[] Colors => _colors;
@@ -28,6 +28,7 @@ namespace Oudidon
         protected Vector2 _currentScale;
         public Vector2 CurrentScale => _currentScale;
         protected float _baseSpeed;
+        public float BaseSpeed => _baseSpeed;
         protected float _speedMultiplier;
         public float CurrentSpeed => _baseSpeed * _speedMultiplier;
         protected float _animationSpeedMultiplier;
@@ -36,11 +37,15 @@ namespace Oudidon
         public string CurrentAnimationName => _currentAnimationName;
         private SpriteSheet.Animation _currentAnimation;
 
+        protected Rectangle _collider;
+        public Rectangle Collider => _collider;
+
         private Action _onAnimationEnd;
         protected Action<int> _onAnimationFrame;
 
         public Character(SpriteSheet spriteSheet, Game game) : base(game)
         {
+            _collider = new Rectangle(0,0, spriteSheet.FrameWidth, spriteSheet.FrameHeight);
             _spriteSheet = spriteSheet;
             _colors = new Color[_spriteSheet.LayerCount];
             _finalColors = new Color[_colors.Length];
@@ -51,7 +56,9 @@ namespace Oudidon
 
         public virtual Rectangle GetBounds()
         {
-            return new Rectangle(PixelPositionX - (CurrentScale.X > 0 ? SpriteSheet.LeftMargin : SpriteSheet.RightMargin), PixelPositionY - (CurrentScale.Y > 0 ? SpriteSheet.TopMargin : SpriteSheet.BottomMargin), SpriteSheet.FrameWidth - 1, SpriteSheet.FrameHeight - 1);
+            int x = PixelPositionX - (CurrentScale.X > 0 ? SpriteSheet.LeftMargin - _collider.X : SpriteSheet.RightMargin + (SpriteSheet.FrameWidth - _collider.X - _collider.Width));
+            int y = PixelPositionY - (CurrentScale.Y > 0 ? SpriteSheet.TopMargin - _collider.Y: SpriteSheet.BottomMargin + (SpriteSheet.FrameHeight - _collider.Y - _collider.Height));
+            return new Rectangle(x, y, Collider.Width, Collider.Height);
         }
 
         public void Activate()

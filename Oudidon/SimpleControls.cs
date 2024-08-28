@@ -58,9 +58,19 @@ namespace Oudidon
             return _keyboardState.IsKeyDown(key) && _keyboardPreviousState.IsKeyUp(key);
         }
 
+        private static bool IsKeyReleasedThisFrame(Keys key)
+        {
+            return _keyboardState.IsKeyUp(key) && _keyboardPreviousState.IsKeyDown(key);
+        }
+
         private static bool IsButtonPressedThisFrame(GamePadState gamePadState, GamePadState previousGamePadState, Buttons button)
         {
             return gamePadState.IsButtonDown(button) && previousGamePadState.IsButtonUp(button);
+        }
+
+        private static bool IsButtonReleasedThisFrame(GamePadState gamePadState, GamePadState previousGamePadState, Buttons button)
+        {
+            return gamePadState.IsButtonUp(button) && previousGamePadState.IsButtonDown(button);
         }
 
         public static bool IsAnyMoveKeyDown(PlayerIndex playerNumber)
@@ -308,6 +318,31 @@ namespace Oudidon
             }
 
             return IsButtonPressedThisFrame(currentState, previousGamePad, Buttons.A);
+        }
+        public static bool IsAReleasedThisFrame(PlayerIndex playerNumber)
+        {
+            GamePadState previousGamePad;
+            GamePadState currentState;
+            if (playerNumber == PlayerIndex.One)
+            {
+                if (IsKeyReleasedThisFrame(Keys.Space))
+                {
+                    return true;
+                }
+                previousGamePad = _gamePadPreviousStatePlayer1;
+                currentState = _gamePadStatePlayer1;
+            }
+            else
+            {
+                if (IsKeyReleasedThisFrame(Keys.F))
+                {
+                    return true;
+                }
+                previousGamePad = _gamePadPreviousStatePlayer2;
+                currentState = _gamePadStatePlayer2;
+            }
+
+            return IsButtonReleasedThisFrame(currentState, previousGamePad, Buttons.A);
         }
 
         public static bool IsBDown(PlayerIndex playerNumber)

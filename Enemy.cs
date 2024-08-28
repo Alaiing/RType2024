@@ -16,34 +16,58 @@ namespace RType2024
         protected virtual int maxHP => 1;
         private int _currentHP;
 
-        protected SpriteSheet _projectileSheet;
         protected Vector2 _spawnPosition;
 
-        public Enemy(SpriteSheet spriteSheet, SpriteSheet projectileSheet, Game game) : base(spriteSheet, game)
+        protected float _bulletCooldown = 10;
+        protected float _bulletTimer;
+        protected Vector2 _bulletSpawnPositionOffset;
+        public Vector2 BulletOffset => _bulletSpawnPositionOffset;
+
+        protected Level _level;
+
+        public Enemy(SpriteSheet spriteSheet, Game game) : base(spriteSheet, game)
         {
-            _projectileSheet = projectileSheet;
             game.Components.Add(this);
             Deactivate();
             SetAnimation(ANIMATION_IDLE);
         }
 
-        public virtual void Spawn(Vector2 position)
+        public virtual void Spawn(Vector2 position, Level level)
         {
+            _level = level;
             _spawnPosition = position;
+            _currentHP = maxHP;
             MoveTo(position);
             Activate();
+            _bulletTimer = CommonRandom.Random.NextSingle() * _bulletCooldown;
         }
 
         public void TakeHit(int amount)
         {
             _currentHP -= amount;
-            if (_currentHP < 0)
+            if (_currentHP <= 0)
             {
                 Die();
             }
         }
 
-        public void Die()
+        protected void FireBullet()
+        {
+            EventsManager.FireEvent(Bullet.SPAWN_BULLET_EVENT, this);
+        }
+
+        public Vector2 GetBulletSpawnPosition()
+        {
+            Vector2 spawnOffset = _bulletSpawnPositionOffset;
+            if (CurrentScale.X < 0)
+            {
+                spawnOffset.X = SpriteSheet.FrameWidth - spawnOffset.X;
+            }
+
+            return _position - _spriteSheet.DefaultPivot.ToVector2() + spawnOffset;
+        }
+
+        public virtual void Die()
         {
             EventsManager.FireEvent(EVENT_ENEMY_DIE, this);
             EventsManager.FireEvent(Explosion.EVENT_SPAWN_EXPLOSION, Position);
@@ -54,6 +78,23 @@ namespace RType2024
         {
             base.Draw(gameTime);
             //SpriteBatch.DrawRectangle(GetBounds(), Color.Green);
+        }
+
+        public override void Update(GameTime gameTime)
+        {
+            base.Update(gameTime);
+            BulletUpdate(gameTime);
+        }
+
+        protected virtual void BulletUpdate(GameTime gameTime)
+        {
+            _bulletTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if (_bulletTimer > _bulletCooldown)
+            {
+                _bulletTimer = 0;
+                FireBullet();
+            }
         }
     }
 }

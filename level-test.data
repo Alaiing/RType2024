@@ -1,0 +1,4 @@
+﻿{
+	"textureName" : "test-level-background",
+	"turrets" : [ "363,121", "379,121" ]
+}
