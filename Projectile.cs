@@ -15,11 +15,10 @@ namespace RType2024
 
         private Level _level;
 
-        private Rectangle _collider;
-
         private SoundEffectInstance _soundInstance;
 
         private int _damage;
+        private int _currentDamage;
 
         public Projectile(SpriteSheet spriteSheet, Game game, SoundEffect sound, int damage) : base(spriteSheet, game)
         {
@@ -34,6 +33,7 @@ namespace RType2024
             _level = level;
             _level.EnabledChanged += OnLevelEnableChanged;
             _level.OnLevelReset += OnLevelReset;
+            _currentDamage = _damage;
             SetBaseSpeed(speed);
             MoveTo(position);
             MoveDirection = direction;
@@ -73,13 +73,17 @@ namespace RType2024
 
         private void TestEnemyCollision()
         {
-            foreach (Enemy enemy in _level.EnemyList)
+            for (int i = _level.EnemyList.Count - 1; i >= 0; i--)
             {
+                Enemy enemy = _level.EnemyList[i];
                 if (MathUtils.OverlapsWith(GetBounds(), enemy.GetBounds()))
                 {
-                    enemy.TakeHit(_damage);
-                    Die();
-                    return;
+                    _currentDamage = Math.Max(0, (int)MathF.Floor(enemy.TakeHit(_currentDamage)));
+                    if (_currentDamage <= 0)
+                    {
+                        Die();
+                        return;
+                    }
                 }
             }
         }

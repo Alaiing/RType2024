@@ -19,6 +19,7 @@ namespace RType2024
         private float _scrollSpeed = 20;
         public float ScrollSpeed => _scrollSpeed;
         private float _scrollOffset;
+        public float ScrollOffset => _scrollOffset;
 
         private Ship _ship;
 
@@ -26,24 +27,53 @@ namespace RType2024
         public List<Enemy> EnemyList => _enemyList;
         private List<Bullet> _bulletList = new();
         public List<Bullet> BulletList => _bulletList;
+        private List<Bonus> _bonusList = new();
+        public List<Bonus> BonusList => _bonusList;
 
         private static SpriteSheet _flySheet;
+        private static SpriteSheet _dartSheet;
         private static SpriteSheet _turretSheet;
         private static SpriteSheet _bonusWalkerSheet;
+        private static SpriteSheet _podBonusSheet;
 
         private float _enemyPeriod = 1f;
         private float _enemySpawnTimer;
 
         public event Action OnLevelReset;
 
+        private enum EnemyType { Fly, Dart, BonusWalker }
+
+        private struct TurretData
+        {
+            public Vector2 position;
+            public bool top;
+        }
+
+        private struct EnemyData
+        {
+            public EnemyType type;
+            public Vector2 position;
+            public int amount;
+        }
+
         private struct LevelData
         {
             public string textureName;
-            public List<Vector2> turrets;
+            public List<TurretData> turrets;
+            public List<EnemyData> enemies;
         }
 
         private LevelData _levelData;
-        private List<Vector2> _currentTurrets;
+        private List<TurretData> _currentTurrets;
+
+        private class EnemySpawnData
+        {
+            public Vector2 position;
+            public EnemyType enemyType;
+            public int amount;
+            public float timer;
+        }
+        private List<EnemySpawnData> _currentEnemiesSpawnData;
 
         public Level(Game game, string levelDataFile, Ship ship) : base(game)
         {
@@ -53,10 +83,18 @@ namespace RType2024
             _data = new Color[_texture.Width * _texture.Height];
             _texture.GetData(_data);
 
+            _currentEnemiesSpawnData = new();
+
             if (_flySheet == null)
             {
                 _flySheet = new SpriteSheet(game.Content, "fly", 24, 24, new Point(12, 12));
                 _flySheet.RegisterAnimation(Enemy.ANIMATION_IDLE, 0, 0, 1);
+            }
+
+            if (_dartSheet == null)
+            {
+                _dartSheet = new SpriteSheet(game.Content, "dart", 24, 16, new Point(12, 8));
+                _dartSheet.RegisterAnimation(Enemy.ANIMATION_IDLE, 0, 3, 4);
             }
 
             if (_turretSheet == null)
@@ -72,7 +110,14 @@ namespace RType2024
                 _bonusWalkerSheet.RegisterAnimation(BonusWalker.ANIMATION_ONGROUND, 1, 1, 1);
             }
 
+            if (_podBonusSheet == null)
+            {
+                _podBonusSheet = new SpriteSheet(game.Content, "pod-bonus", 16, 16, new Point(8, 8));
+                _podBonusSheet.RegisterAnimation(Enemy.ANIMATION_IDLE, 0, 0, 1);
+            }
+
             EventsManager.ListenTo<Enemy>(Enemy.EVENT_ENEMY_DIE, OnEnemyDie);
+            EventsManager.ListenTo<Vector2>(BonusWalker.POD_BONUS_SPAWN_EVENT, OnPodBonusSpawn);
 
             EnabledChanged += OnLevelEnabledChanged;
 
@@ -109,23 +154,71 @@ namespace RType2024
             ClearBullets();
             OnLevelReset?.Invoke();
             _currentTurrets = _levelData.turrets.ToList();
+            GenerateEnemySpawnData();
 
             Enemy bonusEnemy = new BonusWalker(_bonusWalkerSheet, Game);
-            bonusEnemy.Spawn(new Vector2(2 * RType2024.PLAYGROUND_WIDTH / 3, RType2024.PLAYGROUND_HEIGHT / 3), this);
+            bonusEnemy.Spawn(new Vector2(3 * RType2024.PLAYGROUND_WIDTH / 4, RType2024.PLAYGROUND_HEIGHT / 3), this);
             _enemyList.Add(bonusEnemy);
+        }
+
+        private void GenerateEnemySpawnData()
+        {
+            _currentEnemiesSpawnData.Clear();
+            foreach (EnemyData enemyData in _levelData.enemies)
+            {
+                EnemySpawnData enemySpawnData = new EnemySpawnData()
+                {
+                    position = enemyData.position,
+                    enemyType = enemyData.type,
+                    amount = enemyData.amount,
+                    timer = 0f
+                };
+                _currentEnemiesSpawnData.Add(enemySpawnData);
+            }
         }
 
         private void UpdateSpawnEnemy(float deltaTime)
         {
-            _enemySpawnTimer += deltaTime;
-
-            if (_enemySpawnTimer > _enemyPeriod)
+            for (int i = _currentEnemiesSpawnData.Count - 1; i >= 0; i--)
             {
-                _enemySpawnTimer = 0;
-                Enemy enemy = new Fly(_flySheet, Game);
-                enemy.Spawn(new Vector2(RType2024.PLAYGROUND_WIDTH + 50, RType2024.PLAYGROUND_HEIGHT / 2), this);
+                if (_currentEnemiesSpawnData[i].position.X <= _scrollOffset + RType2024.PLAYGROUND_WIDTH)
+                {
+                    if (_currentEnemiesSpawnData[i].timer <= 0)
+                    {
+                        switch (_currentEnemiesSpawnData[i].enemyType)
+                        {
+                            case EnemyType.Fly:
+                                Enemy enemy = new Fly(_flySheet, Game);
+                                enemy.Spawn(new Vector2(RType2024.PLAYGROUND_WIDTH + 50, _currentEnemiesSpawnData[i].position.Y), this);
 
-                _enemyList.Add(enemy);
+                                _enemyList.Add(enemy);
+                                break;
+
+                            case EnemyType.Dart:
+                                enemy = new Dart(_dartSheet, Game);
+                                enemy.Spawn(new Vector2(RType2024.PLAYGROUND_WIDTH + 50, _currentEnemiesSpawnData[i].position.Y), this);
+
+                                _enemyList.Add(enemy);
+                                break;
+
+                            case EnemyType.BonusWalker:
+                                break;
+                        }
+
+                        _currentEnemiesSpawnData[i].amount--;
+
+                        if (_currentEnemiesSpawnData[i].amount <= 0)
+                        {
+                            _currentEnemiesSpawnData.RemoveAt(i);
+                            continue;
+                        }
+
+                        _currentEnemiesSpawnData[i].timer = _enemyPeriod;
+                        continue;
+                    }
+
+                    _currentEnemiesSpawnData[i].timer -= deltaTime;
+                }
             }
         }
 
@@ -135,6 +228,7 @@ namespace RType2024
             _scrollOffset += _scrollSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
             UpdateSpawnEnemy((float)gameTime.ElapsedGameTime.TotalSeconds);
             UpdateSpawnTurrets();
+            ClearOutOfBoundsEnemies();
         }
 
         public override void Draw(GameTime gameTime)
@@ -148,29 +242,29 @@ namespace RType2024
             for (int i = 0; i < collider.Width; i++)
             {
                 Vector2 positionInLevel = position + new Vector2(collider.X + i + (int)_scrollOffset, collider.Y);
-                if (TestPixelAlpha(positionInLevel))
+                if (IsPixelColliding(positionInLevel))
                     return true;
 
                 positionInLevel = position + new Vector2(collider.X + i + (int)_scrollOffset, collider.Y + collider.Height);
-                if (TestPixelAlpha(positionInLevel))
+                if (IsPixelColliding(positionInLevel))
                     return true;
             }
 
             for (int i = 1; i < collider.Height - 1; i++)
             {
                 Vector2 positionInLevel = position + new Vector2(collider.X, collider.Y + i);
-                if (TestPixelAlpha(positionInLevel))
+                if (IsPixelColliding(positionInLevel))
                     return true;
 
                 positionInLevel = position + new Vector2(collider.X + collider.Width, collider.Y + i);
-                if (TestPixelAlpha(positionInLevel))
+                if (IsPixelColliding(positionInLevel))
                     return true;
             }
 
             return false;
         }
 
-        private bool TestPixelAlpha(Vector2 positionInLevel)
+        public bool IsPixelColliding(Vector2 positionInLevel)
         {
             int x = (int)positionInLevel.X;
             int y = (int)positionInLevel.Y;
@@ -180,6 +274,11 @@ namespace RType2024
             Color colorBeneath = _data[index];
 
             return colorBeneath.A > 0;
+        }
+
+        public bool IsOnScreen(Vector2 positionInLevel)
+        {
+            return positionInLevel.X - _scrollOffset > 0 && positionInLevel.X - _scrollOffset < RType2024.PLAYGROUND_WIDTH;
         }
 
         #region Enemies
@@ -218,15 +317,29 @@ namespace RType2024
         {
             for (int i = _currentTurrets.Count - 1; i >= 0; i--)
             {
-                if (_currentTurrets[i].X <= _scrollOffset + RType2024.PLAYGROUND_WIDTH)
+                if (_currentTurrets[i].position.X <= _scrollOffset + RType2024.PLAYGROUND_WIDTH)
                 {
                     Turret newTurret = new Turret(_turretSheet, Game, _ship);
 
-                    newTurret.Spawn(_currentTurrets[i] - new Vector2(_scrollOffset, 0), this);
+                    newTurret.Spawn(_currentTurrets[i].position - new Vector2(_scrollOffset, 0), this);
                     newTurret.SetBaseSpeed(_scrollSpeed);
                     newTurret.MoveDirection = new Vector2(-1, 0);
+                    newTurret.SetScale(new Vector2(1, _currentTurrets[i].top ? -1 : 1));
                     _enemyList.Add(newTurret);
                     _currentTurrets.RemoveAt(i);
+                }
+            }
+        }
+
+        private void ClearOutOfBoundsEnemies()
+        {
+            for (int i = _enemyList.Count - 1; i >= 0; i--)
+            {
+                Enemy enemy = _enemyList[i];
+                if (enemy.Position.X + enemy.SpriteSheet.RightMargin < 0)
+                {
+                    Game.Components.Remove(enemy);
+                    _enemyList.RemoveAt(i);
                 }
             }
         }
@@ -236,6 +349,13 @@ namespace RType2024
         private void OnEnemyDie(Enemy enemy)
         {
             _enemyList.Remove(enemy);
+        }
+
+        private void OnPodBonusSpawn(Vector2 position)
+        {
+            Bonus podBonus = new Bonus(_podBonusSheet, Game);
+            podBonus.Spawn(this, position, () => EventsManager.FireEvent(Pod.SPAWN_POD_EVENT));
+            _bonusList.Add(podBonus);
         }
         #endregion
     }

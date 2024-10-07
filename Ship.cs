@@ -13,6 +13,7 @@ namespace RType2024
     public class Ship : Character
     {
         public const string EVENT_SHIP_DESTROYED = "ShipDestroyed";
+        public const string EVENT_GAME_OVER = "GameOver";
 
         private float _movementSpeed = 50f;
         private float _projectileSpeed = 100f;
@@ -27,6 +28,9 @@ namespace RType2024
         private bool _isCharging;
         public float ProjectileCharge => _projectileCharge;
         public float MaxCharge => _maxCharge;
+
+        private int _lives;
+        public int Lives => _lives;
 
         private struct ChargeLevel
         {
@@ -162,6 +166,8 @@ namespace RType2024
             TestEnemyCollision();
 
             TestEnemyBulletCollision();
+
+            TestBonusCollision();
         }
 
         public override void Draw(GameTime gameTime)
@@ -221,6 +227,18 @@ namespace RType2024
             }
         }
 
+        private void TestBonusCollision()
+        {
+            for (int i = _level.BonusList.Count -1; i >= 0; i--)
+            {
+                Bonus bonus = _level.BonusList[i];
+                if (MathUtils.OverlapsWith(GetBounds(), bonus.GetBounds()))
+                {
+                    bonus.Pickup();
+                }
+            }
+        }
+
         public void FireProjectile(Vector2 position, float projectileCharge)
         {
             int chargeIndex = 0;
@@ -234,7 +252,13 @@ namespace RType2024
 
         private void Die()
         {
+            _lives--;
             EventsManager.FireEvent(EVENT_SHIP_DESTROYED);
+        }
+
+        public void ResetLives()
+        {
+            _lives = 2;
         }
     }
 }

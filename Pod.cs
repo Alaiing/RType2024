@@ -11,10 +11,13 @@ namespace RType2024
 {
     public class Pod : Character
     {
+        public const string SPAWN_POD_EVENT = "SpawnPod";
+
         private enum AttachedMode { None, Front, Back }
 
         private const float CHASING_SPEED = 50f;
         private const float DETACH_SPEED = 200f;
+        private const float DAMAGE_PER_SECOND = 2f;
 
         private Ship _ship;
         private Level _level;
@@ -27,6 +30,8 @@ namespace RType2024
         private float _chasingDuration = 1f;
         private float _chasingTimer;
 
+        private Laser[] _lasers;
+
         private AttachedMode _attachedMode;
 
         public Pod(SpriteSheet spriteSheet, Game game, Ship ship) : base(spriteSheet, game)
@@ -38,6 +43,7 @@ namespace RType2024
             Deactivate();
             DrawOrder = 99;
             UpdateOrder = 2;
+            _lasers = new Laser[2];
         }
 
         public void SetLevel(Level level)
@@ -72,6 +78,7 @@ namespace RType2024
 
         public override void Update(GameTime gameTime)
         {
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (_attachedMode != AttachedMode.None)
             {
                 Vector2 newPosition = _ship.Position;
@@ -84,7 +91,7 @@ namespace RType2024
             }
             else
             {
-                _chasingTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                _chasingTimer += deltaTime;
 
                 if (_chasingTimer > _chasingDuration)
                 {
@@ -98,16 +105,41 @@ namespace RType2024
                 {
                     AttachToShip(MathF.Sign(Position.X - _ship.Position.X) >= 0);
                 }
+            }
 
-                if (SimpleControls.IsAReleasedThisFrame(PlayerIndex.One))
+            if (SimpleControls.IsAReleasedThisFrame(PlayerIndex.One))
+            {
+                if (_attachedMode == AttachedMode.None)
                 {
-                    _ship.FireProjectile(Position + new Vector2(8,0), 0);
+                    _ship.FireProjectile(Position + new Vector2(8, 0), 0);
+                }
+                else
+                {
+                    float direction = _attachedMode == AttachedMode.Front ? 1 : -1;
+
+                    FireLasers(direction);
                 }
             }
 
             base.Update(gameTime);
 
             TestEnemyBulletCollision();
+
+            TestEnemyCollision(deltaTime);
+        }
+
+        private void FireLasers(float direction)
+        {
+            if (Game.Components.Contains(_lasers[0]) || Game.Components.Contains(_lasers[1]))
+                return;
+
+            Laser laser = new Laser(Game, _level);
+            laser.Spawn(Position + new Vector2(direction > 0 ? SpriteSheet.RightMargin : -SpriteSheet.LeftMargin, -SpriteSheet.TopMargin), new Vector2(direction, -1));
+            _lasers[0] = laser;
+
+            laser = new Laser(Game, _level);
+            laser.Spawn(Position + new Vector2(direction > 0 ? SpriteSheet.RightMargin : -SpriteSheet.LeftMargin, SpriteSheet.BottomMargin), new Vector2(direction, 1));
+            _lasers[1] = laser;
         }
 
         private void SetNewTargetPosition(Vector2 targetPosition, float speed)
@@ -132,6 +164,18 @@ namespace RType2024
                 if (MathUtils.OverlapsWith(GetBounds(), bullet.GetBounds()))
                 {
                     _level.RemoveBullet(bullet);
+                }
+            }
+        }
+
+        private void TestEnemyCollision(float deltaTime)
+        {
+            for (int i = _level.EnemyList.Count-1; i >=0;i--)
+            {
+                Enemy enemy = _level.EnemyList[i];
+                if (MathUtils.OverlapsWith(GetBounds(), enemy.GetBounds()))
+                {
+                    enemy.TakeHit(DAMAGE_PER_SECOND * deltaTime);
                 }
             }
         }

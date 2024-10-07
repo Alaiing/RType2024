@@ -1,4 +1,25 @@
 ﻿{
 	"textureName" : "test-level-background",
-	"turrets" : [ "363,121", "379,121" ]
+	"turrets": [
+		{
+			"position": "363,121",
+			"top": "false"
+		},
+		{
+			"position": "379,121",
+			"top": "false"
+		}
+	],
+	"enemies": [
+		{
+			"type": "Dart",
+			"position": "380,50",
+			"amount" :  5
+		},
+		{
+			"type": "Fly",
+			"position": "850,110",
+			"amount" :  5
+		}
+	]
 }

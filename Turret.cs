@@ -22,7 +22,7 @@ namespace RType2024
             base.Update(gameTime);
             float deltaX = _ship.Position.X - _position.X;
 
-            SetScale(new Vector2(MathF.Sign(deltaX), 1));
+            SetScale(new Vector2(MathF.Sign(deltaX), _currentScale.Y));
         }
     }
 }

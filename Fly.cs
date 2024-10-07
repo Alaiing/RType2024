@@ -19,6 +19,7 @@ namespace RType2024
         public Fly(SpriteSheet spriteSheet, Game game) : base(spriteSheet, game)
         {
             SetBaseSpeed(40f);
+            _bulletSpawnPositionOffset = new Vector2(0, spriteSheet.FrameHeight / 2);
         }
 
         public override void Spawn(Vector2 position, Level level)

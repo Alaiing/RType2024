@@ -73,10 +73,15 @@ namespace Oudidon
         {
         }
 
+        public void SetTimeScale(float newTimeScale)
+        {
+            _timeScale = newTimeScale;
+        }
+
         protected override void Update(GameTime gameTime)
         {
-            DeltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
             gameTime.ElapsedGameTime *= _timeScale;
+            DeltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
             GameTime = gameTime;
             CameraShake.Update(DeltaTime);
             CameraFade.Update(DeltaTime);

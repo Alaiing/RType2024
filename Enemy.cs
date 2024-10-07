@@ -14,7 +14,7 @@ namespace RType2024
         public const string EVENT_ENEMY_DIE = "EnemyDie";
 
         protected virtual int maxHP => 1;
-        private int _currentHP;
+        private float _currentHP;
 
         protected Vector2 _spawnPosition;
 
@@ -42,13 +42,15 @@ namespace RType2024
             _bulletTimer = CommonRandom.Random.NextSingle() * _bulletCooldown;
         }
 
-        public void TakeHit(int amount)
+        public float TakeHit(float amount)
         {
             _currentHP -= amount;
             if (_currentHP <= 0)
             {
                 Die();
             }
+
+            return -_currentHP;
         }
 
         protected void FireBullet()
