@@ -20,6 +20,16 @@
 			"type": "Fly",
 			"position": "850,110",
 			"amount" :  5
+		},
+		{
+			"type": "BonusWalker",
+			"position": "500,110",
+			"amount": 1
+		},
+		{
+			"type": "BonusWalker",
+			"position": "600,110",
+			"amount": 1
 		}
 	]
 }

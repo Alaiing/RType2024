@@ -155,10 +155,6 @@ namespace RType2024
             OnLevelReset?.Invoke();
             _currentTurrets = _levelData.turrets.ToList();
             GenerateEnemySpawnData();
-
-            Enemy bonusEnemy = new BonusWalker(_bonusWalkerSheet, Game);
-            bonusEnemy.Spawn(new Vector2(3 * RType2024.PLAYGROUND_WIDTH / 4, RType2024.PLAYGROUND_HEIGHT / 3), this);
-            _enemyList.Add(bonusEnemy);
         }
 
         private void GenerateEnemySpawnData()
@@ -185,25 +181,29 @@ namespace RType2024
                 {
                     if (_currentEnemiesSpawnData[i].timer <= 0)
                     {
+                        Vector2 spawnPosition = new Vector2(RType2024.PLAYGROUND_WIDTH + 50, _currentEnemiesSpawnData[i].position.Y);
+                        Enemy enemy = null;
                         switch (_currentEnemiesSpawnData[i].enemyType)
                         {
                             case EnemyType.Fly:
-                                Enemy enemy = new Fly(_flySheet, Game);
-                                enemy.Spawn(new Vector2(RType2024.PLAYGROUND_WIDTH + 50, _currentEnemiesSpawnData[i].position.Y), this);
-
-                                _enemyList.Add(enemy);
+                                enemy = new Fly(_flySheet, Game);
                                 break;
 
                             case EnemyType.Dart:
                                 enemy = new Dart(_dartSheet, Game);
-                                enemy.Spawn(new Vector2(RType2024.PLAYGROUND_WIDTH + 50, _currentEnemiesSpawnData[i].position.Y), this);
-
-                                _enemyList.Add(enemy);
                                 break;
 
                             case EnemyType.BonusWalker:
+                                enemy = new BonusWalker(_bonusWalkerSheet, Game);
                                 break;
                         }
+
+                        if (enemy == null)
+                            continue;
+
+                        enemy.Spawn(spawnPosition, this);
+
+                        _enemyList.Add(enemy);
 
                         _currentEnemiesSpawnData[i].amount--;
 

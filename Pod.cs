@@ -34,6 +34,10 @@ namespace RType2024
 
         private AttachedMode _attachedMode;
 
+        private int _rank;
+
+        public bool IsSpawned => Enabled;
+
         public Pod(SpriteSheet spriteSheet, Game game, Ship ship) : base(spriteSheet, game)
         {
             _collider = new Rectangle(4,3,16,18);
@@ -56,6 +60,12 @@ namespace RType2024
             MoveTo(new Vector2(-50, RType2024.PLAYGROUND_HEIGHT / 2));
             Activate();
             SetNewTargetPosition(GetTargetPositionFromShip(), CHASING_SPEED);
+            _rank = 0;
+        }
+
+        public void IncreaseRank()
+        {
+            _rank++;
         }
 
         public void Despawn()
@@ -117,7 +127,10 @@ namespace RType2024
                 {
                     float direction = _attachedMode == AttachedMode.Front ? 1 : -1;
 
-                    FireLasers(direction);
+                    if (_rank > 0)
+                    {
+                        FireLasers(direction);
+                    }
                 }
             }
 

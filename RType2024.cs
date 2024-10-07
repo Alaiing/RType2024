@@ -25,6 +25,7 @@ namespace RType2024
 
         private Texture2D _background;
         private SpriteSheet _titleSheet;
+        private SpriteSheet _digitsSheet;
         private Texture2D _lifeIcon;
         private SpriteSheet _explosionSprite;
         private SoundEffect _explosionSound;
@@ -59,6 +60,7 @@ namespace RType2024
             base.LoadContent();
 
             _titleSheet = new SpriteSheet(Content, "title", 40,64, new Point(0,32));
+            _digitsSheet = new SpriteSheet(Content, "digits", 8, 8, new Point(0,0));
             _lifeIcon = Content.Load<Texture2D>("life-icon");
 
             SpriteSheet shipSheet = new SpriteSheet(Content, "ship", 32, 16, new Point(16, 8));
@@ -69,7 +71,7 @@ namespace RType2024
             Components.Add(_ship);
 
             SpriteSheet podSheet = new SpriteSheet(Content, "pod", 24, 24, new Point(12, 12));
-            podSheet.RegisterAnimation("Idle", 0, 0, 1);
+            podSheet.RegisterAnimation("Idle", 0, 3, 10);
             _pod = new Pod(podSheet, this, _ship);
 
             _background = Content.Load<Texture2D>("test-level-background");
@@ -154,7 +156,14 @@ namespace RType2024
 
         private void OnSpawnPod()
         {
-            _pod.Spawn();
+            if (_pod.IsSpawned)
+            {
+                _pod.IncreaseRank();
+            }
+            else
+            {
+                _pod.Spawn();
+            }
         }
 
         #endregion

@@ -32,6 +32,8 @@ namespace RType2024
         private int _lives;
         public int Lives => _lives;
 
+        private SpriteSheet _chargeSheet;
+
         private struct ChargeLevel
         {
             public SpriteSheet SpriteSheet;
@@ -90,6 +92,7 @@ namespace RType2024
                 new ChargeLevel { SpriteSheet = projectileSheetPhase4, Damage = 4, SoundEffect = baseProjectileSound }
             };
 
+            _chargeSheet = new SpriteSheet(Game.Content, "charge", 16, 16, new Point(0, 8));
         }
 
         public override void Reset()
@@ -128,12 +131,14 @@ namespace RType2024
 
             if (_isCharging)
             {
-                _projectileCharge = MathF.Min(_maxCharge, _projectileCharge + _chargeSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds);
+                _projectileCharge = MathF.Min(_maxCharge, _projectileCharge + _chargeSpeed * Game.DeltaTime);
+                _chargeFrame += Game.DeltaTime * 10;
             }
 
             if (SimpleControls.IsAPressedThisFrame(PlayerIndex.One))
             {
                 _projectileCharge = 0;
+                _chargeFrame = 0;
                 _isCharging = true;
             }
 
@@ -142,6 +147,7 @@ namespace RType2024
                 FireProjectile(Position + new Vector2(SpriteSheet.RightMargin + 4, 3), _projectileCharge);
                 _isCharging = false;
                 _projectileCharge = 0;
+                _chargeFrame = 0;
             }
 
             MoveDirection = new Vector2(xMove, yMove);
@@ -170,10 +176,16 @@ namespace RType2024
             TestBonusCollision();
         }
 
+        private float _chargeFrame;
         public override void Draw(GameTime gameTime)
         {
-            SpriteSheet.DrawFrame(CurrentFrame, SpriteBatch, new Vector2(PixelPositionX, PixelPositionY), SpriteSheet.DefaultPivot, 0, Vector2.One, Color.White);
+            Vector2 pixelPosition = new Vector2(PixelPositionX, PixelPositionY);
+            SpriteSheet.DrawFrame(CurrentFrame, SpriteBatch, pixelPosition, SpriteSheet.DefaultPivot, 0, Vector2.One, Color.White);
             //SpriteBatch.DrawRectangle(GetBounds(), Color.Green);
+            if (_chargeFrame >= 1)
+            {
+                _chargeSheet.DrawFrame(((int)_chargeFrame) % _chargeSheet.FrameCount, SpriteBatch, pixelPosition + new Vector2(12, 0), _chargeSheet.DefaultPivot, 0, Vector2.One, Color.White);
+            }
         }
 
         private void TestBackgroundCollision()
@@ -229,7 +241,7 @@ namespace RType2024
 
         private void TestBonusCollision()
         {
-            for (int i = _level.BonusList.Count -1; i >= 0; i--)
+            for (int i = _level.BonusList.Count - 1; i >= 0; i--)
             {
                 Bonus bonus = _level.BonusList[i];
                 if (MathUtils.OverlapsWith(GetBounds(), bonus.GetBounds()))
