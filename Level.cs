@@ -271,6 +271,9 @@ namespace RType2024
 
             int index = x + y * _texture.Width;
 
+            if (index < 0 || index >= _data.Length)
+                return false;
+
             Color colorBeneath = _data[index];
 
             return colorBeneath.A > 0;

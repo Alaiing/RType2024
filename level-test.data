@@ -1,5 +1,5 @@
 ﻿{
-	"textureName" : "test-level-background",
+	"textureName" : "level-background",
 	"turrets": [
 		{
 			"position": "363,121",
