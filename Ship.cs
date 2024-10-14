@@ -34,6 +34,8 @@ namespace RType2024
 
         private SpriteSheet _chargeSheet;
 
+        private Pod _pod;
+
         private struct ChargeLevel
         {
             public SpriteSheet SpriteSheet;
@@ -42,6 +44,9 @@ namespace RType2024
         }
 
         private ChargeLevel[] _chargeLevels;
+        private SoundEffectInstance _chargingSound;
+        private SoundEffectInstance _maxChargeSound;
+
 
         public Ship(SpriteSheet spriteSheet, Game game) : base(spriteSheet, game)
         {
@@ -49,6 +54,11 @@ namespace RType2024
             _baseSpeed = _movementSpeed;
             Initialize();
             UpdateOrder = 1;
+        }
+
+        public void SetPod(Pod pod)
+        {
+            _pod = pod;
         }
 
         public void SetLevel(Level level)
@@ -83,16 +93,23 @@ namespace RType2024
 
             SpriteSheet projectileSheetPhase4 = new SpriteSheet(Game.Content, "projectile-4", 24, 12, new Point(24, 6));
             projectileSheetPhase4.RegisterAnimation(Projectile.IDLE_ANIMATION, 0, 3, 10f);
+            SoundEffect maxProjectileSound = Game.Content.Load<SoundEffect>("zboui");
 
             _chargeLevels = new ChargeLevel[]
             {
                 new ChargeLevel { SpriteSheet = baseProjectileSheet, Damage = 1, SoundEffect = baseProjectileSound },
                 new ChargeLevel { SpriteSheet = projectileSheetPhase2, Damage = 2, SoundEffect = baseProjectileSound },
                 new ChargeLevel { SpriteSheet = projectileSheetPhase3, Damage = 3, SoundEffect = baseProjectileSound },
-                new ChargeLevel { SpriteSheet = projectileSheetPhase4, Damage = 4, SoundEffect = baseProjectileSound }
+                new ChargeLevel { SpriteSheet = projectileSheetPhase4, Damage = 4, SoundEffect = maxProjectileSound }
             };
 
             _chargeSheet = new SpriteSheet(Game.Content, "charge", 16, 16, new Point(0, 8));
+
+            SoundEffect chargeEffect = Game.Content.Load<SoundEffect>("zuuuuiiiii");
+            _chargingSound = chargeEffect.CreateInstance();
+            SoundEffect maxChargeEffect = Game.Content.Load<SoundEffect>("zuizuizui");
+            _maxChargeSound = maxChargeEffect.CreateInstance();
+            _maxChargeSound.IsLooped = true;
         }
 
         public override void Reset()
@@ -132,7 +149,18 @@ namespace RType2024
             if (_isCharging)
             {
                 _projectileCharge = MathF.Min(_maxCharge, _projectileCharge + _chargeSpeed * Game.DeltaTime);
+                float previousChargeFrame = _chargeFrame;
                 _chargeFrame += Game.DeltaTime * 10;
+                if (previousChargeFrame < 1 && _chargeFrame >= 1)
+                {
+                    _chargingSound.Play();
+                }
+
+                if (_projectileCharge >= _maxCharge)
+                {
+                    _chargingSound.Stop();
+                    _maxChargeSound.Play();
+                }
             }
 
             if (SimpleControls.IsAPressedThisFrame(PlayerIndex.One))
@@ -148,6 +176,9 @@ namespace RType2024
                 _isCharging = false;
                 _projectileCharge = 0;
                 _chargeFrame = 0;
+                _chargingSound.Stop();
+                _maxChargeSound.Stop();
+
             }
 
             MoveDirection = new Vector2(xMove, yMove);
@@ -181,10 +212,15 @@ namespace RType2024
         {
             Vector2 pixelPosition = new Vector2(PixelPositionX, PixelPositionY);
             SpriteSheet.DrawFrame(CurrentFrame, SpriteBatch, pixelPosition, SpriteSheet.DefaultPivot, 0, Vector2.One, Color.White);
-            //SpriteBatch.DrawRectangle(GetBounds(), Color.Green);
+
             if (_chargeFrame >= 1)
             {
-                _chargeSheet.DrawFrame(((int)_chargeFrame) % _chargeSheet.FrameCount, SpriteBatch, pixelPosition + new Vector2(12, 0), _chargeSheet.DefaultPivot, 0, Vector2.One, Color.White);
+                Vector2 chargePosition = pixelPosition + new Vector2(14, 0);
+                if (_pod.Enabled && _pod.Attached == Pod.AttachedMode.Front)
+                {
+                    chargePosition += new Vector2(16, 0);
+                }
+                _chargeSheet.DrawFrame(((int)_chargeFrame) % _chargeSheet.FrameCount, SpriteBatch, chargePosition, _chargeSheet.DefaultPivot, 0, Vector2.One, Color.White);
             }
         }
 

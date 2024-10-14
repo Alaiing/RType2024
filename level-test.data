@@ -2,34 +2,91 @@
 	"textureName" : "level-background",
 	"turrets": [
 		{
-			"position": "363,121",
+			"position": "800,31",
+			"top": "true"
+		},
+		{
+			"position": "828,31",
+			"top": "true"
+		},
+		{
+			"position": "866,47",
+			"top": "true"
+		},
+		{
+			"position": "892,47",
+			"top": "true"
+		},
+		{
+			"position": "929,31",
+			"top": "true"
+		},
+		{
+			"position": "956,31",
+			"top": "true"
+		},
+		{
+			"position": "1298,31",
+			"top": "true"
+		},
+		{
+			"position": "1326,31",
+			"top": "true"
+		},
+		{
+			"position": "1487,144",
 			"top": "false"
 		},
 		{
-			"position": "379,121",
+			"position": "1517,144",
 			"top": "false"
 		}
 	],
 	"enemies": [
 		{
 			"type": "Dart",
-			"position": "380,50",
-			"amount" :  5
+			"position": "379,37",
+			"amount": 5
 		},
 		{
 			"type": "Fly",
-			"position": "850,110",
-			"amount" :  5
+			"position": "598,86",
+			"amount": 5
 		},
 		{
 			"type": "BonusWalker",
-			"position": "500,110",
+			"position": "614,161",
 			"amount": 1
 		},
 		{
+			"type": "Dart",
+			"position": "831,97",
+			"amount": 5
+		},
+		{
+			"type": "Fly",
+			"position": "1044,103",
+			"amount": 5
+		},
+		{
 			"type": "BonusWalker",
-			"position": "600,110",
+			"position": "1208,106",
 			"amount": 1
+		},
+		{
+			"type": "Dart",
+			"position": "1263,75",
+			"amount": 5
+		},
+		{
+			"type": "Fly",
+			"position": "1487,72",
+			"amount": 5
+		},
+		{
+			"type": "Dart",
+			"position": "1705,108",
+			"amount": 5
 		}
 	]
 }

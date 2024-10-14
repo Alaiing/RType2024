@@ -97,6 +97,12 @@
 /processorParam:TextureFormat=Color
 /build:digits.png
 
+#begin dziou.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:dziou.wav
+
 #begin explosion.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -264,4 +270,22 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:title.png
+
+#begin zboui.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:zboui.wav
+
+#begin zuizuizui.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:zuizuizui.wav
+
+#begin zuuuuiiiii.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:zuuuuiiiii.wav
 

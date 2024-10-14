@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Oudidon;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace RType2024
     {
         public const string SPAWN_POD_EVENT = "SpawnPod";
 
-        private enum AttachedMode { None, Front, Back }
+        public enum AttachedMode { None, Front, Back }
 
         private const float CHASING_SPEED = 50f;
         private const float DETACH_SPEED = 200f;
@@ -33,20 +34,27 @@ namespace RType2024
         private Laser[] _lasers;
 
         private AttachedMode _attachedMode;
+        public AttachedMode Attached => _attachedMode;
 
         private int _rank;
 
         public bool IsSpawned => Enabled;
 
+        private SoundEffectInstance _laserSound;
+
         public Pod(SpriteSheet spriteSheet, Game game, Ship ship) : base(spriteSheet, game)
         {
-            _collider = new Rectangle(4,3,16,18);
+            _collider = new Rectangle(4, 3, 16, 18);
             _ship = ship;
             SetAnimation("Idle");
             Game.Components.Add(this);
             Deactivate();
             DrawOrder = 99;
             UpdateOrder = 2;
+
+            SoundEffect laser = Game.Content.Load<SoundEffect>("dziou");
+            _laserSound = laser.CreateInstance();
+
             _lasers = new Laser[2];
         }
 
@@ -123,14 +131,12 @@ namespace RType2024
                 {
                     _ship.FireProjectile(Position + new Vector2(8, 0), 0);
                 }
-                else
-                {
-                    float direction = _attachedMode == AttachedMode.Front ? 1 : -1;
 
-                    if (_rank > 0)
-                    {
-                        FireLasers(direction);
-                    }
+                float direction = _attachedMode == AttachedMode.Back ? -1 : 1;
+
+                if (_rank > 0)
+                {
+                    FireLasers(direction);
                 }
             }
 
@@ -153,6 +159,8 @@ namespace RType2024
             laser = new Laser(Game, _level);
             laser.Spawn(Position + new Vector2(direction > 0 ? SpriteSheet.RightMargin : -SpriteSheet.LeftMargin, SpriteSheet.BottomMargin), new Vector2(direction, 1));
             _lasers[1] = laser;
+
+            _laserSound.Play();
         }
 
         private void SetNewTargetPosition(Vector2 targetPosition, float speed)
@@ -171,7 +179,7 @@ namespace RType2024
 
         private void TestEnemyBulletCollision()
         {
-            for (int i = _level.BulletList.Count-1; i >=0; i--)
+            for (int i = _level.BulletList.Count - 1; i >= 0; i--)
             {
                 Bullet bullet = _level.BulletList[i];
                 if (MathUtils.OverlapsWith(GetBounds(), bullet.GetBounds()))
@@ -183,7 +191,7 @@ namespace RType2024
 
         private void TestEnemyCollision(float deltaTime)
         {
-            for (int i = _level.EnemyList.Count-1; i >=0;i--)
+            for (int i = _level.EnemyList.Count - 1; i >= 0; i--)
             {
                 Enemy enemy = _level.EnemyList[i];
                 if (MathUtils.OverlapsWith(GetBounds(), enemy.GetBounds()))

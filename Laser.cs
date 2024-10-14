@@ -118,6 +118,9 @@ namespace RType2024
 
                 for (int j = 1; j < _activePositions.Count; j++)
                 {
+                    if (i >= _level.EnemyList.Count)
+                        break;
+
                     Vector2 firstPoint = _activePositions[j - 1];
                     Vector2 secondPoint = _activePositions[j];
 

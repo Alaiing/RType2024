@@ -181,7 +181,7 @@ namespace RType2024
                 {
                     if (_currentEnemiesSpawnData[i].timer <= 0)
                     {
-                        Vector2 spawnPosition = new Vector2(RType2024.PLAYGROUND_WIDTH + 50, _currentEnemiesSpawnData[i].position.Y);
+                        Vector2 spawnPosition = new Vector2(RType2024.PLAYGROUND_WIDTH, _currentEnemiesSpawnData[i].position.Y);
                         Enemy enemy = null;
                         switch (_currentEnemiesSpawnData[i].enemyType)
                         {

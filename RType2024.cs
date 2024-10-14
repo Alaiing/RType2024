@@ -73,12 +73,13 @@ namespace RType2024
             SpriteSheet podSheet = new SpriteSheet(Content, "pod", 24, 24, new Point(12, 12));
             podSheet.RegisterAnimation("Idle", 0, 3, 10);
             _pod = new Pod(podSheet, this, _ship);
+            _ship.SetPod(_pod);
 
             _background = Content.Load<Texture2D>("test-level-background");
 
 
-            _explosionSprite = new SpriteSheet(Content, "explosion", 16, 16, new Point(8, 8));
-            _explosionSprite.RegisterAnimation(Explosion.ANIMATION_IDLE, 0, 13, 30f);
+            _explosionSprite = new SpriteSheet(Content, "explosion", 32, 32, new Point(16, 16));
+            _explosionSprite.RegisterAnimation(Explosion.ANIMATION_IDLE, 0, 3, 15f);
 
             _bulletSprite = new SpriteSheet(Content, "bullet", 8, 8, new Point(4, 4));
             _bulletSprite.RegisterAnimation(Bullet.ANIMATION_IDLE, 0, 0, 1f);
